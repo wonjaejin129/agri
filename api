@@ -1,0 +1,63 @@
+// React Native / Expo 용 공용 API 클라이언트 예제 (CommonJS)
+const axios = require('axios');
+
+let platformOS = 'android';
+try {
+  // metro 번들러 환경에서는 react-native 패키지가 존재합니다.
+  // eslint-disable-next-line global-require, import/no-extraneous-dependencies
+  const { Platform } = require('react-native');
+  platformOS = Platform.OS;
+} catch (error) {
+  // node 환경(서버)에서 실행될 경우 기본값을 사용합니다.
+  platformOS = process.env.PLATFORM_OS || 'android';
+}
+
+const emulatorHost = platformOS === 'android' ? '10.0.2.2' : 'localhost';
+
+const baseURL =
+  process.env.EXPO_PUBLIC_API_BASE ||
+  process.env.API_BASE ||
+  `http://${emulatorHost}:3001`;
+
+const client = axios.create({
+  baseURL,
+  timeout: 10000,
+});
+
+const setAuthToken = (token) => {
+  if (token) {
+    client.defaults.headers.common.Authorization = `Bearer ${token}`;
+  } else {
+    delete client.defaults.headers.common.Authorization;
+  }
+};
+
+const authApi = {
+  login: (payload) => client.post('/api/login', payload),
+  signup: (payload) => client.post('/api/signup', payload),
+};
+
+const shipmentApi = {
+  list: () => client.get('/api/shipment-log'),
+  create: (payload) => client.post('/api/shipment-log', payload),
+  remove: (id) => client.delete(`/api/shipment/${id}`),
+};
+
+const settlementApi = {
+  search: (params) => client.get('/api/settlement', { params }),
+};
+
+const marketApi = {
+  search: (params) => client.get('/api/market', { params }),
+  options: () => client.get('/api/options'),
+};
+
+module.exports = {
+  default: client,
+  client,
+  setAuthToken,
+  authApi,
+  shipmentApi,
+  settlementApi,
+  marketApi,
+};

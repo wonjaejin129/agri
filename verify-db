@@ -1,0 +1,29 @@
+const fs = require('fs');
+const path = require('path');
+const dotenv = require('dotenv');
+
+const candidateEnvPaths = [
+  path.resolve(__dirname, '../.env'),
+  path.resolve(__dirname, '../../.env'),
+];
+
+candidateEnvPaths.forEach((envPath) => {
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+  }
+});
+
+const { pool } = require('../config/database');
+
+(async () => {
+  try {
+    await pool.promise().query('SELECT 1');
+    console.log('✅ DB 연결 확인 완료');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ DB 연결 확인 실패:', error.message);
+    process.exit(1);
+  } finally {
+    pool.end();
+  }
+})();
